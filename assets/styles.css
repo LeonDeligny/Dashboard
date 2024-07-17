@@ -1,0 +1,173 @@
+/* For the slider track */
+.RangeSlider .rc-slider-track {
+    background-color: #ddd;
+}
+
+/* For the slider handle */
+.RangeSlider .rc-slider-handle {
+    border: solid 1px #ddd;
+    background-color: #fff;
+    box-shadow: none;
+}
+
+/* For the slider rail */
+.RangeSlider .rc-slider-rail {
+    background-color: white;
+}
+
+/* For the slider mark */
+.RangeSlider .rc-slider-mark-text {
+    color: black;
+}
+.Select-control {
+    color: black; /* The color of the input text */
+}
+
+.Select-value-label {
+    color: black; /* The color of the selected option text */
+}
+.mb-2 {
+    margin-bottom: 0rem;
+}
+.navlink:hover {
+    background-color: black; /*choose color as per your preference*/
+    text-decoration: underline;
+}
+.collapse-button {
+    position: relative;
+    padding-right: 25px;
+    color: #fff;
+    transition: all 0.3s ease;
+  }
+
+  .collapse-button::before,
+  .collapse-button::after {
+    content: '';
+    position: absolute;
+    height: 2px;
+    width: 20px;
+    background-color: #fff;
+    transition: all 0.3s ease-in-out;
+  }
+  body {
+    background-color: #DFFFFF;
+    font-family: 'Tahoma', sans-serif;
+  }
+
+  .collapse-button::before {
+    top: 10px;
+  }
+
+  .collapse-button::after {
+    top: 18px;
+  }
+
+  .collapse-button.open::before {
+    top: 14px;
+    transform: rotate(45deg);
+  }
+
+  .collapse-button.open::after {
+    top: 14px;
+    transform: rotate(-45deg);
+  }
+
+  .collapse-button.open .text {
+    color: #194553;
+  }
+
+  .nav-pills .nav-link.active,
+  .nav-pills .show > .nav-link {
+    background-color: black;
+    color: white;
+  }
+
+  .nav-pills .nav-link:hover {
+    background-color: black;
+    color: white;
+  }
+  .subcategory-title {
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  .subcategory-link {
+    color: #fff;
+  }
+/* Initial state of the sidebar hidden off-screen */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -240px; /* Width of the sidebar */
+  bottom: 0;
+  width: 240px; /* Same as left offset to hide it */
+  padding: 2rem 1rem;
+  background-color: #194553;
+  color: #DFFFFF;
+  transition: left 0.3s, width 0.3s;
+  overflow-x: hidden;
+  z-index: 1000;
+  border-radius: 10px; /* Added border-radius for rounded corners */
+}
+
+  .sidebar a {  /* Also specify text color for links explicitly if necessary */
+    color: #DFFFFF;
+  }
+
+/* Place this in assets/style.css in your Dash app folder */
+/* Invisible area to trigger the sidebar hover */
+.hover-trigger {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 30px; /* Width of the sensitive hover area */
+  z-index: 1200; /* Above the sidebar to detect hover */
+}
+
+/* Show sidebar when hovering over the trigger area */
+.hover-trigger:hover + .sidebar,
+.sidebar:hover {
+  left: 0;
+  width: 240px; /* Restore the width when sidebar is active */
+}
+
+/* Optional: Adjust transition speed if you want it snappier or smoother */
+.hover-trigger:hover + .sidebar,
+.sidebar:hover {
+  transition: left 0.3s, width 0.3s;
+}
+
+.custom-card {
+  border-radius: 10px; /* Adjust for smoother curves */
+  box-shadow: 0 4px 8px 0 black; /* Example shadow - adjust as needed */
+  transition: 0.3s; /* Smooth transition for hover effects, etc. */
+}
+
+.custom-card:hover {
+  box-shadow: 0 8px 16px 0 black; /* Shadow effect on hover */
+}
+
+/* Style adjustments for the graph itself, if needed */
+#Week_Bar {
+  border-radius: 10px; /* Smooth curves for the graph container */
+}
+/* assets/custom.css */
+/* assets/custom.css */
+/* assets/custom.css */
+.custom-tabs-container {
+  display: flex;
+  justify-content: center; /* This will center the tab headers */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  margin-top: -25px;  /* Increase the negative value to move tabs further up */
+}
+
+/* Style for the content below the tabs to also center it if needed */
+.custom-tabs-content {
+  margin-top: -10px; /* Adjust as necessary */
+  text-align: center; /* This will center-align the content */
+}
