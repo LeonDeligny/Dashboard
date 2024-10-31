@@ -1,40 +1,28 @@
 """
-Module related to loading (with CONS number), preprocessing, and cleaning from the dataset (with some feature extraction).
+Module related to loading, preprocessing, and cleaning of the data (with feature extraction).
 """
 
-import re, ast, psycopg2, datetime
+import re, ast, datetime, sqlite3
 
-import pandas as pd, numpy as np
+import pandas as pd
 
 from pathlib import Path
 
-from dicts import EQUIPMENT_TYPES, TEAM_COLOR, TOOL_DICT, SHIFT_DICT
+from dicts import EQUIPMENT_TYPES, TEAM_COLOR, SHIFT_DICT
 from utils import fix_operator, assign_team, assign_weekday, standardize_equipment_name, dict_to_str, returns_defaults_dict
 from filters import apply_filter_query
 
 SMC_COLS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17] # Columns we extract from the dataset
-SMC_NAME = ["Number", "Operator", "Date", "Shift", "Equipment", "OK", "NOK", 'A', 'C', 'O', 'R', 'M', 'U', 'd6', "Comments", "OFA", 'YW', 'Type'] # Names of the columns we extract
+SMC_NAME = ["Number", "Operator", "Date", "Shift", "Equipment", "OK", "NOK", 'A', 'C', 'O', 'R', 'M', 'U', 'd6', "Comments", "ofa", 'Week', 'Type'] # Names of the columns we extract
 
 SMC_TRACKING_PATH = Path("C:/Users/a22006/Desktop/Dashboard_hmsa/smc_tracking.csv") # Path("/Users/leondeligny/Desktop/Master/Dashboard_hmsa/smc_tracking.csv") # Path("/var/lib/hmsa/smc_tracking.csv") #
     
 def load_df_smc(input_values):
-    '''
     # Connect to the PostgreSQL database
-    conn = psycopg2.connect(
-        dbname='hmsa2',
-        user='hmsait',
-        password='h46bh2j0',
-        host='172.30.45.67',
-    )
-
+    conn = sqlite3.connect('database1.db')
     query = """
-                select id, usr, dte, shift, pdc, qty_ok, qty_ko, d0, d1, d2, d3, d4, d5, d6,
-
-                '"'||regexp_replace(regexp_replace(comment, '\n+',
-                ' ', 'g'), '\r+', '', 'g')||'"' as
-                comment,
-
-                ofa, week_from(dte, shift) as week, defaults as Type from uu_tracking 
+                select id, usr, dte, shift, pdc, qty_ok, qty_ko, d0, d1, d2, d3, d4, d5, d6, comments, ofa, CAST(strftime('%W', dte) AS INTEGER) as Week, defaults as Type 
+                from uu_tracking 
             """
 
     filtered_query = apply_filter_query(query, input_values)
@@ -46,8 +34,7 @@ def load_df_smc(input_values):
 
     # Close the connection
     conn.close()
-    '''
-    df = pd.read_csv(SMC_TRACKING_PATH, delimiter=';', usecols=SMC_COLS, names=SMC_NAME, skiprows=1)
+    #df = pd.read_csv(SMC_TRACKING_PATH, delimiter=';', usecols=SMC_COLS, names=SMC_NAME, skiprows=1)
 
     df = df[df['Date'].notna()]
     df.reset_index(drop=True, inplace=True)
@@ -57,10 +44,10 @@ def load_df_smc(input_values):
     df['Comments'] = df['Comments'].fillna('')
     df['Operator'] = df['Operator'].fillna('NA')
     df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
-    #df = df.groupby(["OFA", "Date", "Operator", "Collaborator", "Shift", "Operation"]).agg({'OK': 'sum','NOK': 'sum','Type': ' '.join,'Comments': ' '.join}).reset_index()
+    #df = df.groupby(["ofa", "Date", "Operator", "Collaborator", "Shift", "Operation"]).agg({'OK': 'sum','NOK': 'sum','Type': ' '.join,'Comments': ' '.join}).reset_index()
     operators_set = set(df['Operator'])
     df['Operator'] = df['Operator'].apply(lambda x: fix_operator(x, operators_set))
-    df['Week'] = np.where((df['Date'].dt.dayofweek == 6) & (df['Shift'] != 2), (df['Date'] + pd.DateOffset(days=-1)).dt.to_period('W-SAT').dt.week,df['Date'].dt.to_period('W-SAT').dt.week)
+    #df['Week'] = np.where((df['Date'].dt.dayofweek == 6) & (df['Shift'] != 2), (df['Date'] + pd.DateOffset(days=-1)).dt.to_period('W-SAT').dt.week,df['Date'].dt.to_period('W-SAT').dt.week)
 
     df['Team'] = df.apply(assign_team, axis=1)
     df['Shift'] = df['Shift'].map(SHIFT_DICT)
@@ -79,13 +66,7 @@ def load_df_smc(input_values):
 
 def load_ofa_equipment():
     # Connect to the PostgreSQL database
-    conn = psycopg2.connect(
-        dbname='hmsa2',
-        user='hmsait',
-        password='h46bh2j0',
-        host='172.30.45.67',
-    )
-
+    conn = sqlite3.connect('database1.db')
     query = """
                 select dte, shift, pdc, ofa
                 from uu_tracking 
@@ -95,7 +76,7 @@ def load_ofa_equipment():
     # Execute the query and load data into a DataFrame
     df = pd.read_sql_query(query, conn)
 
-    df.columns = ['Date', 'Shift', 'Equipment', 'OFA']
+    df.columns = ['Date', 'Shift', 'Equipment', 'ofa']
 
     # Close the connection
     conn.close()
@@ -118,26 +99,28 @@ def load_color_dict_operator(df_smc):
 
 def load_df_smc_data():
     df = load_ofa_equipment()
-    df_equip_by_OFA = df.groupby('OFA')['Equipment'].unique().reset_index()
-    df_equip_by_OFA.rename(columns={'Equipment': 'Equipment List'}, inplace=True)
-    df_equip_by_OFA['Equipment List'] = df_equip_by_OFA['Equipment List'].apply(standardize_equipment_name)
-    df_last_update = df.groupby('OFA')['Date'].max().reset_index() 
+    df_equip_by_ofa = df.groupby('ofa')['Equipment'].unique().reset_index()
+    df_equip_by_ofa.rename(columns={'Equipment': 'Equipment List'}, inplace=True)
+    df_equip_by_ofa['Equipment List'] = df_equip_by_ofa['Equipment List'].apply(standardize_equipment_name)
+    df_last_update = df.groupby('ofa')['Date'].max().reset_index() 
     df_last_update.rename(columns={'Date': 'Last Update'}, inplace=True) 
-    df_equip_by_OFA = df_equip_by_OFA.merge(df_last_update, on='OFA')
-    return df_equip_by_OFA
+    df_equip_by_ofa = df_equip_by_ofa.merge(df_last_update, on='ofa')
+    return df_equip_by_ofa
 
-def load_df_OFA_mismatch():
-    df_equip_by_OFA = load_df_smc_data()
-    df_OFA_mismatch = df_equip_by_OFA[df_equip_by_OFA['Equipment List'].apply(lambda x: len(set(x)) > 1)]
-    df_OFA_mismatch.loc[:, 'Equipment List'] = df_OFA_mismatch['Equipment List'].apply(lambda x: ', '.join(x))
-    df_OFA_mismatch = df_OFA_mismatch.sort_values(by='Last Update', ascending=False)
-    df_OFA_mismatch['Last Update'] = pd.to_datetime(df_OFA_mismatch['Last Update']).dt.strftime('%d-%m-%Y')    
-    return df_OFA_mismatch
+def load_df_ofa_mismatch():
+    df_equip_by_ofa = load_df_smc_data()
+    df_ofa_mismatch = df_equip_by_ofa[df_equip_by_ofa['Equipment List'].apply(lambda x: len(set(x)) > 1)]
+    df_ofa_mismatch.loc[:, 'Equipment List'] = df_ofa_mismatch['Equipment List'].apply(lambda x: ', '.join(x))
+    df_ofa_mismatch = df_ofa_mismatch.sort_values(by='Last Update', ascending=False)
+    df_ofa_mismatch['Last Update'] = pd.to_datetime(df_ofa_mismatch['Last Update']).dt.strftime('%d-%m-%Y')    
+    return df_ofa_mismatch
 
-def load_df_equip_by_OFA():
-    df_equip_by_OFA = load_df_smc_data()
-    df_equip_by_OFA = df_equip_by_OFA[df_equip_by_OFA['Equipment List'].apply(lambda x: len(set(x)) == 1)]
-    return df_equip_by_OFA
+def load_df_equip_by_ofa():
+    df_equip_by_ofa = load_df_smc_data()
+    df_equip_by_ofa = df_equip_by_ofa[df_equip_by_ofa['Equipment List'].apply(lambda x: len(set(x)) == 1)]
+    return df_equip_by_ofa
+
+TOOL_DICT = {}
 
 def load_df_smc_cons(df):
     l = len(df)
@@ -224,7 +207,7 @@ def extract_cons_tool(df_smc):
     return df_cons #, df_tool
 
 def load_cons_list(df_smc):
-    CONS_LISTS = {'A620HOR': set(), 'A700HOR': set(), 'A720HOR': set()}
+    CONS_LISTS = {'Equipment1': set(), 'Equipment2': set(), 'Equipment3': set()}
     df_smc_cons = extract_cons_tool(df_smc)
     for equipment_key, cons_set in CONS_LISTS.items():
         for _, row in df_smc_cons.iterrows():

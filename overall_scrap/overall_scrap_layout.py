@@ -13,7 +13,7 @@ from dash import html, dcc
 from dash.dependencies import Input, Output
 
 from smc_load import load_df_smc 
-from pp_load import load_df_deburring, load_df_visual
+from pp_load import load_df_twenty, load_df_hundred
 from filters import filter_dataframe, generate_title
 from dicts import CustomCard, WEEK_DICT, COLOR_DICT_GLOBAL
 from utils import load_operator_label, load_equipment_label
@@ -21,13 +21,13 @@ from utils import load_operator_label, load_equipment_label
 def overall_scrap_layout_callbacks(app):
 
     ####################################################################
-    # 1st Graph : NOK of Machining, Deburring, Visual Control per week #
+    # 1st Graph : NOK of 10, 20, 100 Control per week #
     ####################################################################
 
     @app.callback(
         [
-        Output('NOK of Machining, Deburring, Visual Control per week', 'figure'),
-        Output('NOK of Machining, Deburring, Visual Control per week (bis)', 'figure')
+        Output('NOK of 10, 20, 100 Control per week', 'figure'),
+        Output('NOK of 10, 20, 100 Control per week (bis)', 'figure')
         ],
         [
         Input('Year Dropdown 1', 'value'),
@@ -48,15 +48,15 @@ def overall_scrap_layout_callbacks(app):
             return pd.DataFrame({'Week': all_weeks, df_name_ratio: NOK_Ratio.values, df_name_nok: NOK_Total.values, df_name_ok: OK_Total.values})
 
         df_smc_copy = load_df_smc(input_values)
-        df_ebavurage = load_df_deburring(input_values)
-        df_visuel = load_df_visual(input_values)
+        df_twenty = load_df_twenty(input_values)
+        df_visuel = load_df_hundred(input_values)
 
-        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("A700") else x)
+        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("Equipment2") else x)
 
-        dfs = [df_ebavurage, df_visuel, df_smc_copy]
-        df_names_ratio = ['NOK Deburring (%)', 'NOK Visual Control (%)', 'NOK Machining (%)']
-        df_names_nok = ['NOK Deburring', 'NOK Visual Control', 'NOK Machining']
-        df_names_ok = ['OK Deburring', 'OK Visual Control', 'OK Machining']
+        dfs = [df_twenty, df_visuel, df_smc_copy]
+        df_names_ratio = ['NOK 20 (%)', 'NOK 100 (%)', 'NOK 10 (%)']
+        df_names_nok = ['NOK 20', 'NOK 100', 'NOK 10']
+        df_names_ok = ['OK 20', 'OK 100 Control', 'OK 10']
 
         filtered_df_smc = filter_dataframe(df_smc_copy, input_values)  #filter the df_smc for all weeks
         all_weeks = np.sort(filtered_df_smc['Week'].unique())
@@ -82,13 +82,13 @@ def overall_scrap_layout_callbacks(app):
 
 
     ############################################################################
-    # 2nd Graph : NOK (%) of Machining, Deburring, Visual Control per Operator #
+    # 2nd Graph : NOK (%) of 10, 20, 100 Control per Operator #
     ############################################################################
 
     @app.callback(
         [
-        Output('NOK (%) of Machining, Deburring, Visual Control per Operator', 'figure'),
-        Output('NOK (%) of Machining, Deburring, Visual Control per Operator (bis)', 'figure')
+        Output('NOK (%) of 10, 20, 100 Control per Operator', 'figure'),
+        Output('NOK (%) of 10, 20, 100 Control per Operator (bis)', 'figure')
         ],
         [
         Input('Year Dropdown 2', 'value'),
@@ -110,14 +110,14 @@ def overall_scrap_layout_callbacks(app):
             return pd.DataFrame({'Operator': all_Operators, df_name_ratio: NOK_Ratio.values, df_name_nok: NOK_Total.values, df_name_ok: OK_Total.values})
 
         df_smc_copy = load_df_smc(input_values)
-        df_ebavurage = load_df_deburring(input_values)
-        df_visuel = load_df_visual(input_values)
-        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("A700") else x)
+        df_twenty = load_df_twenty(input_values)
+        df_visuel = load_df_hundred(input_values)
+        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("Equipment2") else x)
 
-        dfs = [df_ebavurage, df_visuel, df_smc_copy]
-        df_names_ratio = ['NOK Deburring (%)', 'NOK Visual Control (%)', 'NOK Machining (%)']
-        df_names_nok = ['NOK Deburring', 'NOK Visual Control', 'NOK Machining']
-        df_names_ok = ['OK Deburring', 'OK Visual Control', 'OK Machining']
+        dfs = [df_twenty, df_visuel, df_smc_copy]
+        df_names_ratio = ['NOK 20 (%)', 'NOK 100 (%)', 'NOK 10 (%)']
+        df_names_nok = ['NOK 20', 'NOK 100', 'NOK 10']
+        df_names_ok = ['OK 20', 'OK 100 Control', 'OK 10']
 
         processed_dfs = [process_data(df, name_ratio, name_nok, name_ok) for df, name_ratio, name_nok, name_ok in zip(dfs, df_names_ratio, df_names_nok, df_names_ok)]
 
@@ -125,7 +125,7 @@ def overall_scrap_layout_callbacks(app):
         final_df['NOK (%)'] = final_df[df_names_ratio].sum(axis=1)  # compute total NOK Ratio
 
         fig = go.Figure()  #create a figure
-        final_df.sort_values(by=['NOK (%)', 'NOK Machining (%)', 'NOK Visual Control (%)', 'NOK Deburring (%)'], ascending=False, inplace=True)
+        final_df.sort_values(by=['NOK (%)', 'NOK 10 (%)', 'NOK 100 (%)', 'NOK 20 (%)'], ascending=False, inplace=True)
         for column in df_names_nok:
             fig.add_trace(go.Bar(hovertemplate='%{y:.2f}', x=final_df['Operator'], y=final_df[column], name=column, yaxis='y1', marker_color=COLOR_DICT_GLOBAL[column], opacity=0.65))
             fig.add_trace(go.Scatter(hovertemplate='%{y:.2f}', mode="markers+lines",  x=final_df['Operator'], y=final_df[column + ' (%)'], name=column + ' (%)', yaxis='y2', marker_color=COLOR_DICT_GLOBAL[column]))
@@ -139,13 +139,13 @@ def overall_scrap_layout_callbacks(app):
         return fig, fig
 
     #############################################################################
-    # 3rd Graph : NOK (%) of Machining, Deburring, Visual Control per Equipment #
+    # 3rd Graph : NOK (%) of 10, 20, 100 Control per Equipment #
     #############################################################################
 
     @app.callback(
         [
-        Output('NOK (%) of Machining, Deburring, Visual Control per Equipment', 'figure'),
-        Output('NOK (%) of Machining, Deburring, Visual Control per Equipment (bis)', 'figure')
+        Output('NOK (%) of 10, 20, 100 Control per Equipment', 'figure'),
+        Output('NOK (%) of 10, 20, 100 Control per Equipment (bis)', 'figure')
         ],
         [
         Input('Year Dropdown 3', 'value'),
@@ -167,15 +167,15 @@ def overall_scrap_layout_callbacks(app):
             return pd.DataFrame({'Equipment': all_Equipments, df_name_ratio: NOK_Ratio.values, df_name_nok: NOK_Total.values, df_name_ok: OK_Total.values})
 
         df_smc_copy = load_df_smc(input_values)
-        df_ebavurage = load_df_deburring(input_values)
-        df_visuel = load_df_visual(input_values)
-        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("A700") else x)
+        df_twenty = load_df_twenty(input_values)
+        df_visuel = load_df_hundred(input_values)
+        df_smc_copy['Equipment'] = df_smc_copy['Equipment'].apply(lambda x: x[:-2] if x.startswith("Equipment2") else x)
 
-        dfs = [df_ebavurage, df_visuel, df_smc_copy]
+        dfs = [df_twenty, df_visuel, df_smc_copy]
 
-        df_names_ratio = ['NOK Deburring (%)', 'NOK Visual Control (%)', 'NOK Machining (%)']
-        df_names_nok = ['NOK Deburring', 'NOK Visual Control', 'NOK Machining']
-        df_names_ok = ['OK Deburring', 'OK Visual Control', 'OK Machining']
+        df_names_ratio = ['NOK 20 (%)', 'NOK 100 (%)', 'NOK 10 (%)']
+        df_names_nok = ['NOK 20', 'NOK 100', 'NOK 10']
+        df_names_ok = ['OK 20', 'OK 100 Control', 'OK 10']
 
         processed_dfs = [process_data(df, name_ratio, name_nok, name_ok) for df, name_ratio, name_nok, name_ok in zip(dfs, df_names_ratio, df_names_nok, df_names_ok)]
 
@@ -183,7 +183,7 @@ def overall_scrap_layout_callbacks(app):
         final_df['NOK (%)'] = final_df[df_names_ratio].sum(axis=1)  # compute total NOK Ratio
 
         fig = go.Figure()  #create a figure
-        final_df.sort_values(by=['NOK (%)', 'NOK Machining (%)', 'NOK Visual Control (%)', 'NOK Deburring (%)'], ascending=False, inplace=True)
+        final_df.sort_values(by=['NOK (%)', 'NOK 10 (%)', 'NOK 100 (%)', 'NOK 20 (%)'], ascending=False, inplace=True)
 
         for column in df_names_nok:
             fig.add_trace(go.Bar(hovertemplate='%{y:.2f}', x=final_df['Equipment'], y=final_df[column], name=column, yaxis='y1', marker_color=COLOR_DICT_GLOBAL[column], opacity=0.65))
@@ -209,24 +209,24 @@ def overall_scrap_layout(operator_show):
         return html.Div(children=[
             
         html.Br(),
-        html.P("Data comes from Intranet.", style={'textAlign': 'center'}),
+        html.P("Data comes from database1.db.", style={'textAlign': 'center'}),
 
         dbc.Row([               
 
             ####################################################################
-            # 1st Graph : NOK of Machining, Deburring, Visual Control per week #
+            # 1st Graph : NOK of 10, 20, 100 Control per week #
             ####################################################################
 
             dbc.Col([
                 CustomCard([
-                    dbc.Col(dcc.Graph(id='NOK of Machining, Deburring, Visual Control per week', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
+                    dbc.Col(dcc.Graph(id='NOK of 10, 20, 100 Control per week', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
                     dbc.Button("Open filter options", id="open1", className="mr-2"),
                     ]),
                 dbc.Modal([
                     dbc.ModalHeader("Filter Options"),
                     dbc.ModalBody(
                         CustomCard([
-                            dcc.Graph(id='NOK of Machining, Deburring, Visual Control per week (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
+                            dcc.Graph(id='NOK of 10, 20, 100 Control per week (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
                             html.Label(["Week Selector", dcc.RangeSlider(id='Week Selector 1', min=1, max=52, step=1, value=current_week_list, marks=WEEK_DICT)], style={'marginLeft': '20px', 'fontWeight': 'bold'}),
                             dbc.Row([
                                 dbc.Col(dcc.Dropdown(id='Year Dropdown 1', options=YEAR_LIST, value=current_year)),
@@ -244,19 +244,19 @@ def overall_scrap_layout(operator_show):
         dbc.Row([
 
             ############################################################################
-            # 2nd Graph : NOK (%) of Machining, Deburring, Visual Control per Operator #
+            # 2nd Graph : NOK (%) of 10, 20, 100 Control per Operator #
             ############################################################################
 
             dbc.Col([
                 CustomCard([
-                    dbc.Col(dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Operator', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
+                    dbc.Col(dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Operator', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
                     dbc.Button("Open filter options", id="open2", className="mr-2"),
                 ]),
                 dbc.Modal([
                     dbc.ModalHeader("Filter Options"),
                     dbc.ModalBody(
                         CustomCard([
-                            dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Operator (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
+                            dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Operator (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
                             html.Label(["Week Selector", dcc.RangeSlider(id='Week Selector 2', min=1, max=52, step=1, value=current_week_list, marks=WEEK_DICT)], style={'marginLeft': '20px', 'fontWeight': 'bold'}),
                             dbc.Row([
                                 dbc.Col(dcc.Dropdown(id='Year Dropdown 2', options=YEAR_LIST, value=current_year)),
@@ -271,19 +271,19 @@ def overall_scrap_layout(operator_show):
             
             
             #############################################################################
-            # 3rd Graph : NOK (%) of Machining, Deburring, Visual Control per Equipment #
+            # 3rd Graph : NOK (%) of 10, 20, 100 Control per Equipment #
             #############################################################################
 
             dbc.Col([
                 CustomCard([
-                    dbc.Col(dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Equipment', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
+                    dbc.Col(dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Equipment', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
                     dbc.Button("Open filter options", id="open3", className="mr-2"),
                 ]),
                 dbc.Modal([
                     dbc.ModalHeader("Filter Options"),
                     dbc.ModalBody(
                         CustomCard([
-                            dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Equipment (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"margin": "auto", "display": "block"}),
+                            dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Equipment (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"margin": "auto", "display": "block"}),
                             html.Label(["Week Selector", dcc.RangeSlider(id='Week Selector 3', min=1, max=52, step=1, value=current_week_list, marks=WEEK_DICT)], style={'marginLeft': '20px', 'fontWeight': 'bold'}),
                             dbc.Row([
                                 dbc.Col(dcc.Dropdown(id='Year Dropdown 3', options=YEAR_LIST, value=current_year)),
@@ -301,24 +301,24 @@ def overall_scrap_layout(operator_show):
         return html.Div(children=[
             
         html.Br(),
-        html.P("Data comes from Intranet.", style={'textAlign': 'center'}),
+        html.P("Data comes from database1.db.", style={'textAlign': 'center'}),
 
         dbc.Row([               
 
             ####################################################################
-            # 1st Graph : NOK of Machining, Deburring, Visual Control per week #
+            # 1st Graph : NOK of 10, 20, 100 Control per week #
             ####################################################################
 
             dbc.Col([
                 CustomCard([
-                    dbc.Col(dcc.Graph(id='NOK of Machining, Deburring, Visual Control per week', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
+                    dbc.Col(dcc.Graph(id='NOK of 10, 20, 100 Control per week', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
                     dbc.Button("Open filter options", id="open1", className="mr-2"),
                     ]),
                 dbc.Modal([
                     dbc.ModalHeader("Filter Options"),
                     dbc.ModalBody(
                         CustomCard([
-                            dcc.Graph(id='NOK of Machining, Deburring, Visual Control per week (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
+                            dcc.Graph(id='NOK of 10, 20, 100 Control per week (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"flexGrow": "1"}),
                             html.Label(["Week Selector", dcc.RangeSlider(id='Week Selector 1', min=1, max=52, step=1, value=current_week_list, marks=WEEK_DICT)], style={'marginLeft': '20px', 'fontWeight': 'bold'}),
                             dbc.Row([
                                 dbc.Col(dcc.Dropdown(id='Year Dropdown 1', options=YEAR_LIST, value=current_year)),
@@ -336,19 +336,19 @@ def overall_scrap_layout(operator_show):
         dbc.Row([               
 
             #############################################################################
-            # 3rd Graph : NOK (%) of Machining, Deburring, Visual Control per Equipment #
+            # 3rd Graph : NOK (%) of 10, 20, 100 Control per Equipment #
             #############################################################################
 
             dbc.Col([
                 CustomCard([
-                    dbc.Col(dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Equipment', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
+                    dbc.Col(dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Equipment', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}), className='p-0', style={"flexGrow": "1"}),
                     dbc.Button("Open filter options", id="open3", className="mr-2"),
                 ]),
                 dbc.Modal([
                     dbc.ModalHeader("Filter Options"),
                     dbc.ModalBody(
                         CustomCard([
-                            dcc.Graph(id='NOK (%) of Machining, Deburring, Visual Control per Equipment (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"margin": "auto", "display": "block"}),
+                            dcc.Graph(id='NOK (%) of 10, 20, 100 Control per Equipment (bis)', clickData=None, config={'scrollZoom':True, 'displayModeBar': False}, style={"margin": "auto", "display": "block"}),
                             html.Label(["Week Selector", dcc.RangeSlider(id='Week Selector 3', min=1, max=52, step=1, value=current_week_list, marks=WEEK_DICT)], style={'marginLeft': '20px', 'fontWeight': 'bold'}),
                             dbc.Row([
                                 dbc.Col(dcc.Dropdown(id='Year Dropdown 3', options=YEAR_LIST, value=current_year)),

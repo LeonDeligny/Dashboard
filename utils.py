@@ -1,21 +1,17 @@
-import calendar, json, re, psycopg2, ast, csv, hashlib
+import calendar, json, re, psycopg2, ast, hashlib, sqlite3
 
 import pandas as pd, numpy as np
+
+PASSWORD = "?admin"
 
 ###############
 # Load Labels #
 ###############
 
-SMC_NAME = ["Number", "Operator", "Date", "Shift", "Equipment", "OK", "NOK", 'A', 'C', 'O', 'R', 'M', 'U', 'd6', "Comments", "OFA", 'YW'] # Names of the columns we extract
+SMC_NAME = ["Number", "Operator", "Date", "Shift", "Equipment", "OK", "NOK", 'A', 'C', 'O', 'R', 'M', 'U', 'd6', "Comments", "ofa", 'YW'] # Names of the columns we extract
 
 def load_operator_label():
-    conn = psycopg2.connect(
-        dbname='hmsa2',
-        user='hmsait',
-        password='h46bh2j0',
-        host='172.30.45.67',
-    )
-
+    conn = sqlite3.connect('database1.db')
     query = """
                 select distinct usr
                 from uu_tracking 
@@ -32,13 +28,7 @@ def load_operator_label():
     return operator_label
 
 def load_equipment_label():
-    conn = psycopg2.connect(
-        dbname='hmsa2',
-        user='hmsait',
-        password='h46bh2j0',
-        host='172.30.45.67',
-    )
-
+    conn = sqlite3.connect('database1.db')
     query = """
                 select distinct pdc
                 from uu_tracking 
@@ -50,11 +40,7 @@ def load_equipment_label():
     # Close the connection
     conn.close()
 
-    equipment_label = [{'label': 'All Equipments', 'value': 'All'},
-                       {'label': 'A620HOR', 'value': 'A620HOR'}, 
-                       {'label': 'A700HOR', 'value': 'A700HOR'}, 
-                       {'label': 'A720HOR', 'value': 'A720HOR'},
-                       ] + [{'label': i, 'value': i} for i in df['pdc'] if isinstance(i, str)]
+    equipment_label = [{'label': 'All Equipments', 'value': 'All'}] + [{'label': i, 'value': i} for i in df['pdc'] if isinstance(i, str)]
     
     return equipment_label
 
@@ -158,13 +144,13 @@ def extract_type_smc(df):
             operator = row['Operator']
             shift = row['Shift']
             weekday = row['Weekday']
-            ofa = row['OFA']
+            ofa = row['ofa']
             ok = row['OK']
             nok = row['NOK']
             new_data.append([type, nok_qty if type in row['Type'] else 0, year, week, date, equipment, operator, shift, weekday, ofa, ok, nok])
     
-    df_Type = pd.DataFrame(new_data, columns=['Type', 'NOK by Type', 'Year', 'Week', 'Date', 'Equipment', 'Operator', 'Shift', 'Weekday', 'OFA', 'OK', 'NOK'])
-    df_Type = df_Type.groupby(['Type', 'Year', 'Week', 'Date', 'Equipment', 'Operator', 'Shift', 'Weekday', 'OFA'], as_index=False).sum()
+    df_Type = pd.DataFrame(new_data, columns=['Type', 'NOK by Type', 'Year', 'Week', 'Date', 'Equipment', 'Operator', 'Shift', 'Weekday', 'ofa', 'OK', 'NOK'])
+    df_Type = df_Type.groupby(['Type', 'Year', 'Week', 'Date', 'Equipment', 'Operator', 'Shift', 'Weekday', 'ofa'], as_index=False).sum()
     return df_Type
 
 def extract_type(df):
@@ -191,13 +177,13 @@ def extract_type(df):
             collaborator = row['Collaborator']
             shift = row['Shift']
             weekday = row['Weekday']
-            ofa = row['OFA']
+            ofa = row['ofa']
             ok = row['OK']
             nok = row['NOK']
             new_data.append([type, nok_qty if type in row['Type'] else 0, year, week, operation, equipment, operator, collaborator, shift, weekday, ofa, ok, nok])
     
-    df_Type = pd.DataFrame(new_data, columns=['Type', 'NOK by Type', 'Year', 'Week', 'Operation', 'Equipment', 'Operator', 'Collaborator', 'Shift', 'Weekday', 'OFA', 'OK', 'NOK'])
-    df_Type = df_Type.groupby(['Type', 'Year', 'Week', 'Operation', 'Equipment', 'Operator', 'Collaborator', 'Shift', 'Weekday', 'OFA'], as_index=False).sum()
+    df_Type = pd.DataFrame(new_data, columns=['Type', 'NOK by Type', 'Year', 'Week', 'Operation', 'Equipment', 'Operator', 'Collaborator', 'Shift', 'Weekday', 'ofa', 'OK', 'NOK'])
+    df_Type = df_Type.groupby(['Type', 'Year', 'Week', 'Operation', 'Equipment', 'Operator', 'Collaborator', 'Shift', 'Weekday', 'ofa'], as_index=False).sum()
     return df_Type
 
 def string_to_hex_color(s):
@@ -214,12 +200,7 @@ def returns_defaults_color_dict() -> dict:
     # Initialize an empty dictionary
     DEFAULTS_COLOR_DICT = {}
 
-    conn = psycopg2.connect(
-            dbname='hmsa2',
-            user='hmsait',
-            password='h46bh2j0',
-            host='172.30.45.67',
-        )
+    conn = sqlite3.connect('database1.db')
 
     query = """
                 select distinct def_descr
@@ -240,12 +221,7 @@ def returns_defaults_dict() -> dict:
     # Initialize an empty dictionary
     DEFAULTS_DICT = {}
 
-    conn = psycopg2.connect(
-            dbname='hmsa2',
-            user='hmsait',
-            password='h46bh2j0',
-            host='172.30.45.67',
-        )
+    conn = sqlite3.connect('database1.db')
 
     query = """
                 select def_name, def_descr

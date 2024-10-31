@@ -5,9 +5,10 @@ import dash, dash_bootstrap_components as dbc
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from homepage.homepage_layout import home_layout
-from micro_machining.micro_machining_layout import register_micro_machining_layout_callbacks, micro_machining_layout
-from post_processing.post_processing_layout import register_post_processing_layout_callbacks, post_processing_layout
+from pre_ten.pre_ten_layout import register_pre_ten_layout_callbacks, pre_ten_layout
+from post_twenty.post_twenty_layout import register_post_twenty_layout_callbacks, post_twenty_layout
 from overall_scrap.overall_scrap_layout import overall_scrap_layout_callbacks, overall_scrap_layout
+from utils import PASSWORD
 
 warnings.filterwarnings('ignore')
 
@@ -160,7 +161,7 @@ app.layout = html.Div([
     Input('url', 'search')
 )
 def update_layout(search):
-    if search != '?admin':
+    if search != PASSWORD:
         return html.Div([ 
         html.Div(className='hover-trigger'),
         
@@ -176,8 +177,8 @@ def update_layout(search):
                 dbc.NavLink("Scraps", id="collapse-button", className="mb-3"),
 
                 dbc.Collapse(dbc.Nav([
-                    # Micro-Machining Access
-                    dbc.NavLink("Micro-Machining", href="/mu", active="exact"),
+                    # pre-Ten Access
+                    dbc.NavLink("pre-Ten", href="/mu", active="exact"),
 
                     # Post-Processing Access
                     dbc.NavLink("Post Processing", href="/pp", active="exact"),
@@ -197,7 +198,7 @@ def update_layout(search):
         
         # Sidebar
         html.Div(id="sidebar", className="sidebar", children=[
-            html.H2("Q-Dot Scrap Data", className='my-4'),
+            html.H2("Scrap Data", className='my-4'),
             html.Hr(),
             dbc.Nav([ 
                 # Home Page Button
@@ -207,8 +208,8 @@ def update_layout(search):
                 dbc.NavLink("Scraps", id="collapse-button", className="mb-3"),
 
                 dbc.Collapse(dbc.Nav([
-                    # Micro-Machining Access
-                    dbc.NavLink("Micro-Machining", href="/mu?admin", active="exact"),
+                    # pre-Ten Access
+                    dbc.NavLink("pre-Ten", href="/mu?admin", active="exact"),
 
                     # Post-Processing Access
                     dbc.NavLink("Post Processing", href="/pp?admin", active="exact"),
@@ -224,8 +225,8 @@ def update_layout(search):
     ])
 
 
-register_micro_machining_layout_callbacks(app)
-register_post_processing_layout_callbacks(app)
+register_pre_ten_layout_callbacks(app)
+register_post_twenty_layout_callbacks(app)
 overall_scrap_layout_callbacks(app)
 
 @app.callback(
@@ -238,14 +239,14 @@ overall_scrap_layout_callbacks(app)
 def render_page_content(pathname, search):
     if pathname in ["/", "/ho"]:
         return home_layout()
-    elif (pathname == "/mu") and (search  == "?admin"):
-        return micro_machining_layout(operator_show = True)
-    elif (pathname == "/os") and (search  == "?admin"):
+    elif (pathname == "/mu") and (search  == PASSWORD):
+        return pre_ten_layout(operator_show = True)
+    elif (pathname == "/os") and (search  == PASSWORD):
         return overall_scrap_layout(operator_show = True)
     elif pathname == "/mu":
-        return micro_machining_layout(operator_show = False)
+        return pre_ten_layout(operator_show = False)
     elif pathname == "/pp":
-        return post_processing_layout()
+        return post_twenty_layout()
     elif pathname == "/os":
         return overall_scrap_layout(operator_show = False)
     else:
@@ -256,4 +257,7 @@ def render_page_content(pathname, search):
         ])
 
 if __name__ == '__main__':
-    app.run(debug=True, host="localhost", port=8180) # app.run(debug=True, host="172.30.45.67", port=8180)
+    """
+    Add debug=True if you want the blue circle on bottom right for traceback (most recent call last).
+    """
+    app.run(debug=True, host="localhost", port=8180)

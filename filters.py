@@ -5,7 +5,7 @@ Module related to filtering dataframes.
 import pandas as pd
 import calendar
 
-from dicts import ILOT_LIST, ILOT_DICT, EQUIPMENT_TYPES, INV_SHIFT_DICT, EQUIPMENTS_PER_OPERATOR_LIST
+from dicts import EQUIPMENTS_PER_OPERATOR_LIST, EQUIPMENT_TYPES
 
 def filter_operator(df, operator_value):
     if operator_value != 'All':
@@ -19,12 +19,7 @@ def filter_shift(df, shift_value):
 
 def filter_equipment(df, equipment_value):
     if equipment_value != 'All':
-        if equipment_value in ['A620HOR', 'A700HOR', 'A720HOR']:
-            df = df[df['Equipment'].str.contains(equipment_value)]
-        elif equipment_value in ['Ilot1', 'Ilot2', 'Ilot3', 'Ilot4']:
-            df = df[df['Equipment'].isin(ILOT_DICT[equipment_value])]
-        else:
-            df = df[df['Equipment'] == equipment_value]
+        df = df[df['Equipment'] == equipment_value]
     return df
 
 def filter_eq_per_operator(df, equipment_per_operator):
@@ -94,12 +89,7 @@ def filter_dataframe(data_frame, input_values):
 
     if 'Equipment' in input_values and input_values['Equipment'] != 'All':
         equipment = input_values['Equipment']
-        if equipment in EQUIPMENT_TYPES:
-            data_frame = data_frame[data_frame['Equipment'].str.contains(equipment)]
-        elif equipment in ILOT_LIST:
-            data_frame = data_frame[data_frame['Equipment'].isin(ILOT_DICT[equipment])]
-        else:
-            data_frame = data_frame[data_frame['Equipment'] == equipment]
+        data_frame = data_frame[data_frame['Equipment'] == equipment]
 
     if 'Equipments per Operator' in input_values:
         if '#Equipments/Operator' not in data_frame.columns:
@@ -115,8 +105,8 @@ def apply_filter_query(query, input_values):
 
     # Start to filter on Year and Week (Two features that are ALWAYS present in every db).
     filtered_query = query + (  
-        f"WHERE EXTRACT(YEAR FROM dte) = {input_values['Year']} "
-        f"AND EXTRACT(wEEK FROM dte) BETWEEN {start_week} AND {end_week}"
+        f"WHERE CAST(strftime('%Y', dte) AS INTEGER) = {input_values['Year']} "
+        f"AND CAST(strftime('%W', dte) AS INTEGER) BETWEEN {start_week} AND {end_week}"
     )
 
     if 'Shift' in input_values and input_values['Shift'] != 'All':
